@@ -73,6 +73,14 @@ public class Robot
     }
 
     /**
+     * Gira el robot a la direccion deseada
+     * 
+     */
+    public void turn(char direction){
+        this.direction = direction;
+    }
+
+    /**
      * Comprueba el estado operativo del robot y verifica si el movimiento es válido.
      *
      * @return {@code true} si el robot está operativo; {@code false} si no lo está.
