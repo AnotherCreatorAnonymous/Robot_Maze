@@ -12,6 +12,7 @@ public class Robot
     private char direction;
     private int life;
     private boolean ok;
+    private Triangle Robot;
 
 
     // Inicio Ciclo 1
@@ -22,6 +23,7 @@ public class Robot
     public Robot(int posX, int posY)
     {
         // inicializamos las variables de instancia
+        Robot = new Triangle();
         this.posX = posX;
         this.posY = posY;
         this.direction = 'N';
@@ -77,6 +79,10 @@ public class Robot
      * 
      */
     public void turn(char direction){
+        if (this.direction == 'N' && direction == 'S'){
+            Triangle.rotate(180);
+
+        }
         this.direction = direction;
     }
 

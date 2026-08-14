@@ -15,6 +15,7 @@ public class Triangle{
     private int width;
     private int xPosition;
     private int yPosition;
+    private int rotationAngleDegrees;
     private String color;
     private boolean isVisible;
 
@@ -26,6 +27,7 @@ public class Triangle{
         width = 40;
         xPosition = 140;
         yPosition = 15;
+        rotationAngleDegrees = 0;
         color = "green";
         isVisible = false;
     }
@@ -155,6 +157,57 @@ public class Triangle{
         color = newColor;
         draw();
     }
+    
+    /**
+     * Rotate the triangle 90 degrees in clockwise ('R') or counterclockwise ('L') direction.
+     * @param spinDirection 'R' for clockwise, 'L' for counterclockwise
+     */
+    public void rotate90(char spinDirection) {
+        rotate(directionToDegrees(spinDirection, 90));
+    }
+    
+    /**
+     * Rotate the triangle 180 degrees.
+     */
+    public void rotate180() {
+        rotate(180);
+    }
+    
+    /**
+     * Rotate the triangle 270 degrees in clockwise ('R') or counterclockwise ('L') direction.
+     * @param spinDirection 'R' for clockwise, 'L' for counterclockwise
+     */
+    public void rotate270(char spinDirection) {
+        rotate(directionToDegrees(spinDirection, 270));
+    }
+
+    /**
+     * Rotate the triangle clockwise by 90 or 180 degrees.
+     * @param degrees amount of degrees to rotate
+     */
+    public void rotate(int degrees) {
+        erase();
+        rotationAngleDegrees = normalizeAngle(rotationAngleDegrees + degrees);
+        draw();
+    }
+    
+    private int directionToDegrees(char spinDirection, int degrees) {
+        if(spinDirection == 'R') {
+            return degrees;
+        }
+        if(spinDirection == 'L') {
+            return -degrees;
+        }
+        throw new IllegalArgumentException("spinDirection must be 'R' or 'L'.");
+    }
+    
+    private int normalizeAngle(int angle) {
+        int normalized = angle % 360;
+        if(normalized < 0) {
+            normalized += 360;
+        }
+        return normalized;
+    }
 
     /*
      * Draw the triangle with current specifications on screen.
@@ -162,8 +215,21 @@ public class Triangle{
     private void draw(){
         if(isVisible) {
             Canvas canvas = Canvas.getCanvas();
-            int[] xpoints = { xPosition, xPosition + (width/2), xPosition - (width/2) };
-            int[] ypoints = { yPosition, yPosition + height, yPosition + height };
+            int[] baseXPoints = { xPosition, xPosition + (width / 2), xPosition - (width / 2) };
+            int[] baseYPoints = { yPosition, yPosition + height, yPosition + height };
+            int centerX = (baseXPoints[0] + baseXPoints[1] + baseXPoints[2]) / 3;
+            int centerY = (baseYPoints[0] + baseYPoints[1] + baseYPoints[2]) / 3;
+            double angleInRadians = Math.toRadians(rotationAngleDegrees);
+            int[] xpoints = new int[VERTICES];
+            int[] ypoints = new int[VERTICES];
+            for(int i = 0; i < VERTICES; i++) {
+                int translatedX = baseXPoints[i] - centerX;
+                int translatedY = baseYPoints[i] - centerY;
+                int rotatedX = (int)Math.round((translatedX * Math.cos(angleInRadians)) - (translatedY * Math.sin(angleInRadians)));
+                int rotatedY = (int)Math.round((translatedX * Math.sin(angleInRadians)) + (translatedY * Math.cos(angleInRadians)));
+                xpoints[i] = centerX + rotatedX;
+                ypoints[i] = centerY + rotatedY;
+            }
             canvas.draw(this, color, new Polygon(xpoints, ypoints, 3));
             canvas.wait(10);
         }
