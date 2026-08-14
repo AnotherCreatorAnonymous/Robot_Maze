@@ -1,32 +1,86 @@
 /**
- * Write a description of class Robot here.
+ * Robotsito sabroso para el proyecto robot_maze, Objeto principal
  * 
- * @author (your name) 
- * @version (a version number or a date)
+ * @author (AlejoOsp) 
+ * @version (1.0.0)
  */
 public class Robot
 {
     // instance variables - replace the example below with your own
-    private int x;
+    private int posX;
+    private int posY;
+    private char direction;
+    private int life;
+    private boolean ok;
+
+
+    // Inicio Ciclo 1
 
     /**
-     * Constructor for objects of class Robot
+     * Constructor para el robotsito
      */
-    public Robot()
+    public Robot(int posX, int posY)
     {
-        // initialise instance variables
-        x = 0;
+        // inicializamos las variables de instancia
+        this.posX = posX;
+        this.posY = posY;
+        this.direction = 'N';
+        this.life = 10;
+        this.ok = true;
     }
 
     /**
-     * An example of a method - replace this comment with your own
-     * 
-     * @param  y   a sample parameter for a method
-     * @return     the sum of x and y 
+     * Coordinates devuelve las coordenadas del robotsito
+     *
+     * @return la posición del robot en x y y como arreglo [posX, posY].
      */
-    public int sampleMethod(int y)
+    public int[] coordinates()
     {
-        // put your code here
-        return x + y;
+        // retorna valor en x y y
+        return new int[] { this.posX, this.posY };
     }
+
+    /**
+     * Direction devuelve la dirección en la que está apuntando el robotsito
+     *
+     * @return la dirección del robot como carácter.
+     */
+    public char direction()
+    {
+        return this.direction;
+    }
+
+    // fin ciclo 1
+
+    // Inicio ciclo 2
+
+    /**
+     * Método para mover el robotsito en la dirección que está apuntando.
+     */
+    public void move(int step){
+        if (direction == 'N' ) {
+            this.posY += step;
+        }
+        else if (direction == 'S') {
+            this.posY -= step;
+        }
+        else if (direction == 'E') {
+            this.posX += step;
+        }
+        else if (direction == 'W') {
+            this.posX -= step;
+        }
+    }
+
+    /**
+     * Comprueba el estado operativo del robot y verifica si el movimiento es válido.
+     *
+     * @return {@code true} si el robot está operativo; {@code false} si no lo está.
+     */
+    public boolean isOK()
+    {
+        return ok;
+    }
+
+    // fin ciclo 2
 }
