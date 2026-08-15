@@ -117,6 +117,23 @@ public class Robot
 
     //Inicio Ciclo 3
 
+    /**
+     * Hace visible al robot.
+     */
+    public void makeVisible(){
+        isVisible = true;
+        Robot.makeVisible();
+    }
+
+    /**
+     * Hace invisible al robot.
+     */
+    public void makeInvisible(){
+        Robot.makeInvisible();
+        isVisible = false;
+    }
+
+
     // fin ciclo 3
 
     //Helpers Privados
