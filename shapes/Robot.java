@@ -13,6 +13,7 @@ public class Robot
     private int life;
     private boolean ok;
     private Triangle Robot;
+    private boolean isVisible;
 
 
     // Inicio Ciclo 1
@@ -29,6 +30,7 @@ public class Robot
         this.direction = 'N';
         this.life = 10;
         this.ok = true;
+        this.isVisible = false;
     }
 
     /**
