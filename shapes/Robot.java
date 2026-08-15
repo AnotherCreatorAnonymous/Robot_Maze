@@ -76,13 +76,23 @@ public class Robot
 
     /**
      * Gira el robot a la direccion deseada
-     * 
+     *
      */
     public void turn(char direction){
-        if (this.direction == 'N' && direction == 'S'){
-            Triangle.rotate(180);
+        int currentIndex = directionToIndex(this.direction);
+        int targetIndex = directionToIndex(direction);
+        int steps = (targetIndex - currentIndex + 4) % 4;
 
+        if (steps == 1) {
+            Robot.rotate90('R');
         }
+        else if (steps == 2) {
+            Robot.rotate180();
+        }
+        else if (steps == 3) {
+            Robot.rotate270('R');
+        }
+
         this.direction = direction;
     }
 
@@ -102,4 +112,20 @@ public class Robot
     //Inicio Ciclo 3
 
     // fin ciclo 3
+
+    //Helpers Privados
+
+    /**
+     * helper privado para el método turn.
+     * Convierte una dirección cardinal en su índice en sentido horario (N=0, E=1, S=2, W=3).
+     */
+    private int directionToIndex(char direction){
+        switch (direction) {
+            case 'N': return 0;
+            case 'E': return 1;
+            case 'S': return 2;
+            case 'W': return 3;
+        }
+        return -1;  // Retorna -1 si la dirección no es válida y para que compile el helper.
+    }
 }
