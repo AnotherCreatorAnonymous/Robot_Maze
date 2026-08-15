@@ -62,15 +62,19 @@ public class Robot
     public void move(int step){
         if (direction == 'N' ) {
             this.posY += step;
+            Robot.moveVertical(step);
         }
         else if (direction == 'S') {
             this.posY -= step;
+            Robot.moveVertical(-step);
         }
         else if (direction == 'E') {
             this.posX += step;
+            Robot.moveHorizontal(step);
         }
         else if (direction == 'W') {
             this.posX -= step;
+            Robot.moveHorizontal(-step);
         }
     }
 
