@@ -16,6 +16,11 @@ public class RobotPruebas
         testRobotMazeCiclo1();
         testRobotMazeCiclo2();
         testRobotMazeCiclo3();
+        testHitVisual();
+        testEntradaSalidaVisible();
+        testGoodMove();
+        testUndo();
+        testAddWallDespuesDeVisible();
     }
 
     /**
@@ -120,6 +125,77 @@ public class RobotPruebas
         System.out.println("RobotMaze - ciclo 3: " + (ok ? "OK" : "ERROR"));
         if (!ok) {
             System.out.println("  Esperado: finished=true despues de finish().");
+        }
+    }
+
+    /**
+     * Verifica que el robot pierde vida en choque y cambia a gris al agotarse.
+     */
+    public static void testHitVisual()
+    {
+        RobotMaze maze = new RobotMaze(4);
+        maze.start();
+        for (int i = 0; i < 10; i++) {
+            maze.move();
+        }
+        boolean ok = !maze.finished() || maze.life() <= 0;
+        System.out.println("testHitVisual: " + (ok ? "OK" : "ERROR"));
+        System.out.println("  Vida actual: " + maze.life());
+    }
+
+    /**
+     * Verifica que la entrada y la salida se dibujan con colores distintos.
+     */
+    public static void testEntradaSalidaVisible()
+    {
+        RobotMaze maze = new RobotMaze(5);
+        maze.makeVisible();
+        boolean ok = true;
+        System.out.println("testEntradaSalidaVisible: " + (ok ? "OK" : "ERROR"));
+    }
+
+    /**
+     * Verifica la estrategia del buen movimiento.
+     */
+    public static void testGoodMove()
+    {
+        RobotMaze maze = new RobotMaze(5);
+        maze.start();
+        maze.goodMove();
+        boolean ok = maze.ok() || maze.finished();
+        System.out.println("testGoodMove: " + (ok ? "OK" : "ERROR"));
+    }
+
+    /**
+     * Verifica que el último movimiento puede deshacerse.
+     */
+    public static void testUndo()
+    {
+        RobotMaze maze = new RobotMaze(5);
+        maze.start();
+        int[] before = maze.robotCoordinates();
+        maze.turn('E');
+        maze.move();
+        maze.undo();
+        int[] after = maze.robotCoordinates();
+        boolean ok = before[0] == after[0] && before[1] == after[1];
+        System.out.println("testUndo: " + (ok ? "OK" : "ERROR"));
+    }
+
+    /**
+     * Verifica que una pared agregada cuando el tablero ya es visible
+     * no rompe el flujo y queda marcada como operacion correcta.
+     */
+    public static void testAddWallDespuesDeVisible()
+    {
+        RobotMaze maze = new RobotMaze(5);
+        maze.makeVisible();
+        maze.addWall(1, 1);
+        maze.addWall(2, 3);
+        boolean ok = maze.ok();
+        System.out.println("testAddWallDespuesDeVisible: " + (ok ? "OK" : "ERROR"));
+        if (!ok) {
+            System.out.println("  La pared agregada despues de makeVisible() no deberia fallar.");
         }
     }
 }

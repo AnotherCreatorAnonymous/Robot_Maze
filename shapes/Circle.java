@@ -96,6 +96,18 @@ public class Circle{
     }
 
     /**
+     * Move the circle to an absolute position.
+     * @param x the new x coordinate in pixels
+     * @param y the new y coordinate in pixels
+     */
+    public void moveTo(int x, int y){
+        erase();
+        xPosition = x;
+        yPosition = y;
+        draw();
+    }
+
+    /**
      * Move the circle vertically.
      * @param distance the desired distance in pixels
      */

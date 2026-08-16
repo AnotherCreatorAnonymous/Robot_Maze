@@ -60,6 +60,15 @@ public class Wall
     }
 
     /**
+     * Restaura el estado visual y lógico de la pared tras deshacer un movimiento.
+     */
+    public void resetHit()
+    {
+        hit = false;
+        shape.changeColor(COLOR_OK);
+    }
+
+    /**
      * Indica si la pared ya fue golpeada.
      *
      * @return true si el robot chocó contra ella alguna vez.

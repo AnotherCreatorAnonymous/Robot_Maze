@@ -218,4 +218,19 @@ public class Robot
         }
         return -1;
     }
+
+    /**
+     * Restaura el estado del robot para deshacer un movimiento.
+     * Es un helper interno del paquete para RobotMaze.
+     */
+    void restoreState(int x, int y, char dir, int lifeValue)
+    {
+        this.posX = x;
+        this.posY = y;
+        this.direction = dir;
+        this.life = lifeValue;
+        this.ok = true;
+        this.shape.changeColor((this.life > 0) ? "green" : "gray");
+        relocate();
+    }
 }
