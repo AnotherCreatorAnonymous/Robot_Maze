@@ -1,3 +1,13 @@
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
+import java.util.Stack;
+
 import javax.swing.JOptionPane;
 
 /**
@@ -20,6 +30,7 @@ public class RobotMaze
     private Robot robot;
     private Circle entryMarker;
     private Circle exitMarker;
+    private Set<Long> caminoGarantizado;
     private boolean visible;
     private boolean started;
     private boolean finished;
@@ -42,14 +53,15 @@ public class RobotMaze
      */
     public RobotMaze(int size)
     {
-        if (size < 3) {
-            throw new IllegalArgumentException("El tamaño mínimo del laberinto es 3.");
+        if (size < 10) {
+            throw new IllegalArgumentException("El tamaño mínimo del laberinto es 10.");
         }
 
         this.size = size;
         this.cellSize = 20;
         this.originX = 20;
         this.originY = 20;
+        this.caminoGarantizado = null;
         this.visible = false;
         this.started = false;
         this.finished = false;
@@ -75,6 +87,307 @@ public class RobotMaze
         }
 
         refreshMarkers();
+    }
+
+    /**
+     * Crea un laberinto aleatorio con paredes generadas internamente,
+     * garantizando que siempre exista un camino válido desde la entrada hasta la salida.
+     *
+     * <p>El llamador no controla la cantidad de paredes. La cantidad la decide el
+     * algoritmo a partir del tamaño del tablero y del borde obligatorio del mismo.
+     * El parámetro {@code paredesAleatorias} solo sirve para distinguir esta sobrecarga
+     * de {@link #RobotMaze(int)}; debe ser {@code true}.</p>
+     *
+     * @param size tamaño del tablero cuadrado (mínimo 10).
+     * @param paredesAleatorias debe ser {@code true}.
+     */
+    public RobotMaze(int size, boolean paredesAleatorias)
+    {
+        this(size);
+
+        if (!paredesAleatorias) {
+            throw new IllegalArgumentException("El parámetro paredesAleatorias debe ser true.");
+        }
+
+        generarLaberintoConSolucion();
+    }
+
+    /**
+     * Devuelve la fila de entrada del laberinto.
+     *
+     * @return fila de la entrada.
+     */
+    public int entryX()
+    {
+        return entryX;
+    }
+
+    /**
+     * Devuelve la columna de entrada del laberinto.
+     *
+     * @return columna de la entrada.
+     */
+    public int entryY()
+    {
+        return entryY;
+    }
+
+    /**
+     * Devuelve la fila de salida del laberinto.
+     *
+     * @return fila de la salida.
+     */
+    public int exitX()
+    {
+        return exitX;
+    }
+
+    /**
+     * Devuelve la columna de salida del laberinto.
+     *
+     * @return columna de la salida.
+     */
+    public int exitY()
+    {
+        return exitY;
+    }
+
+    /**
+     * Indica si una celda concreta contiene una pared.
+     *
+     * @param row fila de la celda.
+     * @param column columna de la celda.
+     * @return true si la celda tiene pared.
+     */
+    public boolean hasWall(int row, int column)
+    {
+        return isValidCell(row, column) && walls[row][column] != null;
+    }
+
+    /**
+     * Devuelve la cantidad de paredes actualmente colocadas en el tablero.
+     *
+     * @return cantidad de paredes visibles en el laberinto.
+     */
+    public int wallCount()
+    {
+        int count = 0;
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (walls[i][j] != null) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Indica si existe un camino transitable entre la entrada y la salida,
+     * considerando las paredes actuales del laberinto.
+     *
+     * @return true si la salida es alcanzable sin cruzar ninguna pared.
+     */
+    public boolean tieneSolucion()
+    {
+        return hayCaminoEntradaSalida();
+    }
+
+    /**
+     * Genera un camino sencillo y protegido desde la entrada hasta la salida.
+     *
+     * @return conjunto de celdas que quedan reservadas como paso garantizado.
+     */
+    private Set<Long> celdasDelCaminoGarantizado()
+    {
+        if (caminoGarantizado != null) {
+            return new HashSet<Long>(caminoGarantizado);
+        }
+
+        Set<Long> camino = new HashSet<Long>();
+        int row = entryX;
+        int column = entryY;
+        camino.add(claveCelda(row, column));
+
+        while (row != exitX || column != exitY) {
+            boolean moverEnFila = (row != exitX) && (column == exitY || Math.random() < 0.5);
+            if (moverEnFila) {
+                row += (exitX > row) ? 1 : -1;
+            }
+            else {
+                column += (exitY > column) ? 1 : -1;
+            }
+            camino.add(claveCelda(row, column));
+        }
+
+        caminoGarantizado = new HashSet<Long>(camino);
+        return new HashSet<Long>(camino);
+    }
+
+    /**
+     * Calcula la clave única de una celda del tablero para usarla en un conjunto.
+     *
+     * @param row fila de la celda.
+     * @param column columna de la celda.
+     * @return clave numérica de la celda.
+     */
+    private long claveCelda(int row, int column)
+    {
+        return (long) row * size + column;
+    }
+
+    /**
+     * Coloca paredes obligatorias en el borde del tablero, excepto en la entrada,
+     * la salida y cualquier celda de borde que pertenezca al camino garantizado.
+     *
+     * @param camino conjunto de celdas protegidas por el camino garantizado.
+     * @return conjunto de celdas de borde en las que sí se colocó pared.
+     */
+    private Set<Long> colocarParedesDeBorde(Set<Long> camino)
+    {
+        Set<Long> celdasDeBorde = new HashSet<Long>();
+
+        for (int row = 0; row < size; row++) {
+            for (int column = 0; column < size; column++) {
+                boolean esBorde = (row == 0 || row == size - 1 || column == 0 || column == size - 1);
+                if (!esBorde) {
+                    continue;
+                }
+
+                boolean esEntradaOSalida = (row == entryX && column == entryY)
+                    || (row == exitX && column == exitY);
+                boolean estaEnElCamino = camino.contains(claveCelda(row, column));
+
+                if (!esEntradaOSalida && !estaEnElCamino) {
+                    walls[row][column] = new Wall(row, column);
+                    walls[row][column].changeGrid(cellSize, originX, originY);
+                    celdasDeBorde.add(claveCelda(row, column));
+                }
+            }
+        }
+
+        return celdasDeBorde;
+    }
+
+    /**
+     * Genera un laberinto perfecto con DFS + backtracking.
+     * El tablero se inicializa lleno de paredes y se va excavando en pasos de 2
+     * celdas para dejar pasillos de un ancho de una celda.
+     */
+    private void generarLaberintoConSolucion()
+    {
+        for (int row = 0; row < size; row++) {
+            for (int column = 0; column < size; column++) {
+                walls[row][column] = new Wall(row, column);
+                walls[row][column].changeGrid(cellSize, originX, originY);
+            }
+        }
+
+        Stack<int[]> pila = new Stack<int[]>();
+        pila.push(new int[] { 1, 1 });
+        walls[1][1] = null;
+
+        int[][] direcciones = {
+            { 0, 2 },
+            { 2, 0 },
+            { 0, -2 },
+            { -2, 0 }
+        };
+
+        while (!pila.isEmpty()) {
+            int[] actual = pila.peek();
+            int row = actual[0];
+            int column = actual[1];
+
+            List<int[]> vecinos = new ArrayList<int[]>();
+            for (int[] direccion : direcciones) {
+                int filaSiguiente = row + direccion[0];
+                int columnaSiguiente = column + direccion[1];
+
+                if (isValidCell(filaSiguiente, columnaSiguiente)
+                    && walls[filaSiguiente][columnaSiguiente] != null) {
+                    vecinos.add(new int[] { filaSiguiente, columnaSiguiente });
+                }
+            }
+
+            if (!vecinos.isEmpty()) {
+                int[] siguiente = vecinos.get((int)(Math.random() * vecinos.size()));
+                int paredFila = row + (siguiente[0] - row) / 2;
+                int paredColumna = column + (siguiente[1] - column) / 2;
+
+                walls[paredFila][paredColumna] = null;
+                walls[siguiente[0]][siguiente[1]] = null;
+                pila.push(siguiente);
+            }
+            else {
+                pila.pop();
+            }
+        }
+
+        Set<Long> camino = celdasDelCaminoGarantizado();
+        colocarParedesDeBorde(camino);
+
+        walls[entryX][entryY] = null;
+        walls[exitX][exitY] = null;
+
+        if (entryX == 0 && isValidCell(1, entryY)) {
+            walls[1][entryY] = null;
+        }
+        else if (entryX == size - 1 && isValidCell(size - 2, entryY)) {
+            walls[size - 2][entryY] = null;
+        }
+        else if (entryY == 0 && isValidCell(entryX, 1)) {
+            walls[entryX][1] = null;
+        }
+        else if (entryY == size - 1 && isValidCell(entryX, size - 2)) {
+            walls[entryX][size - 2] = null;
+        }
+
+        if (exitX == 0 && isValidCell(1, exitY)) {
+            walls[1][exitY] = null;
+        }
+        else if (exitX == size - 1 && isValidCell(size - 2, exitY)) {
+            walls[size - 2][exitY] = null;
+        }
+        else if (exitY == 0 && isValidCell(exitX, 1)) {
+            walls[exitX][1] = null;
+        }
+        else if (exitY == size - 1 && isValidCell(exitX, size - 2)) {
+            walls[exitX][size - 2] = null;
+        }
+    }
+
+    /**
+     * Busca si hay un camino entre la entrada y la salida sin atravesar paredes.
+     *
+     * @return true si existe un camino transitable.
+     */
+    private boolean hayCaminoEntradaSalida()
+    {
+        boolean[][] visitado = new boolean[size][size];
+        Queue<int[]> pendientes = new LinkedList<int[]>();
+        pendientes.add(new int[] { entryX, entryY });
+        visitado[entryX][entryY] = true;
+
+        int[] dx = {0, 0, 1, -1};
+        int[] dy = {1, -1, 0, 0};
+
+        while (!pendientes.isEmpty()) {
+            int[] actual = pendientes.poll();
+            if (actual[0] == exitX && actual[1] == exitY) {
+                return true;
+            }
+
+            for (int i = 0; i < 4; i++) {
+                int nx = actual[0] + dx[i];
+                int ny = actual[1] + dy[i];
+                if (isValidCell(nx, ny) && !visitado[nx][ny] && walls[nx][ny] == null) {
+                    visitado[nx][ny] = true;
+                    pendientes.add(new int[] { nx, ny });
+                }
+            }
+        }
+        return false;
     }
 
     /**
