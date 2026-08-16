@@ -7,11 +7,9 @@ import java.awt.*;
  * @version 1.0  (15 July 2000)()
  */
 
-
- 
 public class Rectangle{
 
-    public static int EDGES = 4;
+    public static final int EDGES = 4;
     
     private int height;
     private int width;
@@ -94,6 +92,18 @@ public class Rectangle{
     public void moveVertical(int distance){
         erase();
         yPosition += distance;
+        draw();
+    }
+
+    /**
+     * Move the rectangle to an absolute screen position.
+     * @param x the new x coordinate in pixels
+     * @param y the new y coordinate in pixels
+     */
+    public void moveTo(int x, int y){
+        erase();
+        xPosition = x;
+        yPosition = y;
         draw();
     }
 

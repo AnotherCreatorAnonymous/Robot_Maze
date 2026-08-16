@@ -1,154 +1,221 @@
 /**
- * Robotsito sabroso para el proyecto robot_maze, Objeto principal
- * 
- * @author (AlejoOsp) 
- * @version (1.0.0)
+ * Robotsito sabroso para el proyecto robot_maze, Objeto principal.
+ * Trabaja en coordenadas de casilla y conoce la geometría del tablero
+ * mediante la configuración del grid.
+ *
+ * @author (AlejoOsp)
+ * @version (2.0.0)
  */
 public class Robot
 {
-    // instance variables - replace the example below with your own
-    private int posX;
-    private int posY;
-    private char direction;
-    private int life;
-    private boolean ok;
-    private Triangle Robot;
-    private boolean isVisible;
+    private int posX;            // columna dentro del laberinto
+    private int posY;            // fila dentro del laberinto
+    private char direction;      // N, E, S o W
+    private int life;            // puntos de vida
+    private boolean ok;          // false si la última operación no pudo hacerse
+    private boolean isVisible;   // Triangle no expone un consultor
+    private Triangle shape;      // representación gráfica del robot
 
+    private int cellSize;        // pixeles por casilla
+    private int originX;         // pixel donde empieza la columna 0
+    private int originY;         // pixel donde empieza la fila 0
 
-    // Inicio Ciclo 1
+    private static final char[] DIRECTIONS = {'N', 'E', 'S', 'W'};
+    private static final int[] STEP_X = {0, 1, 0, -1};
+    private static final int[] STEP_Y = {-1, 0, 1, 0};
+    private static final int MAX_LIFE = 10;
+    private static final int DEFAULT_CELL = 20;
 
     /**
-     * Constructor para el robotsito
+     * Constructor para el robotsito. Se crea mirando al norte y con vida completa.
+     *
+     * @param posX columna inicial.
+     * @param posY fila inicial.
      */
     public Robot(int posX, int posY)
     {
-        // inicializamos las variables de instancia
-        Robot = new Triangle();
         this.posX = posX;
         this.posY = posY;
         this.direction = 'N';
-        this.life = 10;
+        this.life = MAX_LIFE;
         this.ok = true;
         this.isVisible = false;
+        this.cellSize = DEFAULT_CELL;
+        this.originX = 0;
+        this.originY = 0;
+        this.shape = new Triangle();
+        relocate();
     }
 
     /**
-     * Coordinates devuelve las coordenadas del robotsito
+     * Coordinates devuelve las coordenadas del robotsito.
      *
-     * @return la posición del robot en x y y como arreglo [posX, posY].
+     * @return la posición del robot como arreglo [posX, posY].
      */
     public int[] coordinates()
     {
-        // retorna valor en x y y
         return new int[] { this.posX, this.posY };
     }
 
     /**
-     * Direction devuelve la dirección en la que está apuntando el robotsito
+     * Direction devuelve la dirección en la que está apuntando el robotsito.
      *
-     * @return la dirección del robot como carácter.
+     * @return la dirección del robot como carácter (N, E, S o W).
      */
     public char direction()
     {
         return this.direction;
     }
 
-    // fin ciclo 1
-
-    // Inicio ciclo 2
-
     /**
-     * Método para mover el robotsito en la dirección que está apuntando.
+     * Mueve el robot en la dirección a la que apunta.
+     * No valida paredes ni bordes; eso le corresponde al laberinto.
+     *
+     * @param step cantidad de casillas a avanzar; si es negativo retrocede.
      */
-    public void move(int step){
-        if (direction == 'N' ) {
-            this.posY += step;
-            Robot.moveVertical(step);
+    public void move(int step)
+    {
+        int index = directionToIndex(this.direction);
+        if (index == -1 || life <= 0) {
+            ok = false;
+            return;
         }
-        else if (direction == 'S') {
-            this.posY -= step;
-            Robot.moveVertical(-step);
-        }
-        else if (direction == 'E') {
-            this.posX += step;
-            Robot.moveHorizontal(step);
-        }
-        else if (direction == 'W') {
-            this.posX -= step;
-            Robot.moveHorizontal(-step);
-        }
+
+        posX += STEP_X[index] * step;
+        posY += STEP_Y[index] * step;
+        relocate();
+        ok = true;
     }
 
     /**
-     * Gira el robot a la direccion deseada
+     * Gira el robot hacia la dirección deseada.
      *
+     * @param direction dirección destino (N, E, S o W).
      */
-    public void turn(char direction){
-        int currentIndex = directionToIndex(this.direction);
+    public void turn(char direction)
+    {
         int targetIndex = directionToIndex(direction);
-        int steps = (targetIndex - currentIndex + 4) % 4;
+        if (targetIndex == -1 || life <= 0) {
+            ok = false;
+            return;
+        }
 
+        int steps = (targetIndex - directionToIndex(this.direction) + 4) % 4;
         if (steps == 1) {
-            Robot.rotate90('R');
+            shape.rotate90('R');
         }
         else if (steps == 2) {
-            Robot.rotate180();
+            shape.rotate180();
         }
         else if (steps == 3) {
-            Robot.rotate270('R');
+            shape.rotate90('L');
         }
 
         this.direction = direction;
+        ok = true;
     }
 
     /**
-     * Comprueba el estado operativo del robot y verifica si el movimiento es válido.
+     * Comprueba si la última operación solicitada se pudo realizar.
      *
-     * @return {@code true} si el robot está operativo; {@code false} si no lo está.
+     * @return true si la última operación fue válida; false en caso contrario.
      */
     public boolean isOK()
     {
         return ok;
     }
 
-    // fin ciclo 2
-
-
-    //Inicio Ciclo 3
-
     /**
      * Hace visible al robot.
      */
-    public void makeVisible(){
+    public void makeVisible()
+    {
         isVisible = true;
-        Robot.makeVisible();
+        shape.makeVisible();
     }
 
     /**
      * Hace invisible al robot.
      */
-    public void makeInvisible(){
-        Robot.makeInvisible();
+    public void makeInvisible()
+    {
+        shape.makeInvisible();
         isVisible = false;
     }
 
-
-    // fin ciclo 3
-
-    //Helpers Privados
+    /**
+     * Ajusta la geometría del tablero sobre el que se dibuja el robot.
+     *
+     * @param cellSize tamaño en píxeles de cada casilla.
+     * @param originX pixel de la columna 0.
+     * @param originY pixel de la fila 0.
+     */
+    public void changeGrid(int cellSize, int originX, int originY)
+    {
+        this.cellSize = cellSize;
+        this.originX = originX;
+        this.originY = originY;
+        relocate();
+    }
 
     /**
-     * helper privado para el método turn.
-     * Convierte una dirección cardinal en su índice en sentido horario (N=0, E=1, S=2, W=3).
+     * Consulta la vida disponible del robot.
+     *
+     * @return los puntos de vida restantes.
      */
-    private int directionToIndex(char direction){
-        switch (direction) {
-            case 'N': return 0;
-            case 'E': return 1;
-            case 'S': return 2;
-            case 'W': return 3;
+    public int life()
+    {
+        return life;
+    }
+
+    /**
+     * Registra un choque: el robot pierde un punto de vida.
+     */
+    public void hit()
+    {
+        if (life > 0) {
+            life--;
         }
-        return -1;  // Retorna -1 si la dirección no es válida y para que compile el helper.
+        if (life == 0) {
+            shape.changeColor("gray");
+        }
+        ok = false;
+    }
+
+    /**
+     * Indica si al robot todavía le queda vida.
+     *
+     * @return true si tiene al menos un punto de vida.
+     */
+    public boolean isAlive()
+    {
+        return life > 0;
+    }
+
+    /**
+     * Vuelve a ubicar el triángulo en la casilla que indican posX y posY.
+     */
+    private void relocate()
+    {
+        int margin = Math.max(2, cellSize / 6);
+        shape.changeSize(cellSize - (2 * margin), cellSize - (2 * margin));
+        shape.moveTo(originX + (posX * cellSize) + (cellSize / 2),
+                     originY + (posY * cellSize) + margin);
+    }
+
+    /**
+     * Helper privado para turn y move.
+     * Convierte una dirección cardinal en su índice en sentido horario (N=0, E=1, S=2, W=3).
+     *
+     * @return el índice de la dirección, o -1 si el carácter no es válido.
+     */
+    private int directionToIndex(char direction)
+    {
+        for (int i = 0; i < DIRECTIONS.length; i++) {
+            if (DIRECTIONS[i] == direction) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

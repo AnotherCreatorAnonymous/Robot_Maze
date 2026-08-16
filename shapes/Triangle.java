@@ -9,7 +9,7 @@ import java.awt.*;
 
 public class Triangle{
     
-    public static int VERTICES=3;
+    public static final int VERTICES = 3;
     
     private int height;
     private int width;
@@ -93,6 +93,18 @@ public class Triangle{
     public void moveVertical(int distance){
         erase();
         yPosition += distance;
+        draw();
+    }
+
+    /**
+     * Move the triangle to an absolute screen position.
+     * @param x the new x coordinate in pixels
+     * @param y the new y coordinate in pixels
+     */
+    public void moveTo(int x, int y){
+        erase();
+        xPosition = x;
+        yPosition = y;
         draw();
     }
 
